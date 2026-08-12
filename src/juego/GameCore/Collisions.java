@@ -32,7 +32,7 @@ public class Collisions {
                 return true; 
             }
 
-            // 1.2 ZOMBIE VS PLANT (Bite)
+            // 1.2 ZOMBIE VS PLANT (Bite with Cooldown)
             boolean isTouchingPlant = false;
             for (int j = 0; j < plants.length; j++) {
                 Plant p = plants[j];
@@ -40,8 +40,14 @@ public class Collisions {
 
                 if (z.isColliding(p.getX(), p.getY(), 40, 40)) {
                     isTouchingPlant = true;
-                    z.setAttacking(true);
-                    p.receiveDamage(); 
+                    z.setAttacking(true); // Frena al zombie para que empiece a comer
+                    
+                    // --- MODIFICACIÓN DE DAÑO GRADUAL ---
+                    // Solo daña a la planta si el temporizador del zombie se completó (ej. cada 1 segundo)
+                    if (z.canAttack()) {
+                        p.receiveDamage(z.getAttackDamage()); 
+                    }
+                    // ------------------------------------
                     
                     if (!p.isAlive()) { 
                         // If it was a bomb, explode!
@@ -100,28 +106,33 @@ public class Collisions {
         } 
 
         // 2. ZOMBIE PROJECTILE VS PLANT
-        for (int k = 0; k < zombieProjectiles.length; k++) {
-            ZombieProjectile zp = zombieProjectiles[k];
-            if (zp == null) { continue; }
+for (int k = 0; k < zombieProjectiles.length; k++) {
+    ZombieProjectile zp = zombieProjectiles[k];
+    if (zp == null) { continue; }
 
-            for (int j = 0; j < plants.length; j++) {
-                Plant p = plants[j];
-                if (p == null || !p.isAlive()) { continue; }
+    for (int j = 0; j < plants.length; j++) {
+        Plant p = plants[j];
+        if (p == null || !p.isAlive()) { continue; }
 
-                if (p.itIsColision(zp.getX(), zp.getY(), zp.getDiameter(), zp.getDiameter())) {
-                    p.receiveShootDamage();
-                    zombieManager.removeProjectile(k);
-                    
-                    if (!p.isAlive()) {
-                        if (p.getName().equals("Rose-Bomba")) {
-                            this.explode(p.getRow(), p.getColumn(), zombieManager, graves, board, finalBoss);
-                        }
-                        plantManager.removePlant(j);
-                    }
-                    break;
+        if (p.itIsColision(zp.getX(), zp.getY(), zp.getDiameter(), zp.getDiameter())) {
+            
+            // --- CAMBIO ACÁ: Pasamos un daño controlado en lugar de matar de golpe ---
+            int projectileDamage = 25; // Podés ajustar este número (ej: 15, 25, 50)
+            p.receiveDamage(projectileDamage); 
+            // ----------------------------------------------------------------------
+            
+            zombieManager.removeProjectile(k);
+            
+            if (!p.isAlive()) {
+                if (p.getName().equals("Rose-Bomba")) {
+                    this.explode(p.getRow(), p.getColumn(), zombieManager, graves, board, finalBoss);
                 }
+                plantManager.removePlant(j);
             }
+            break;
         }
+    }
+}
 
         // 3. SHOT (PLANT) VS GRAVE
         for (int k = 0; k < shots.length; k++) {

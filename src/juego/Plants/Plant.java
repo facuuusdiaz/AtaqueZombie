@@ -34,19 +34,22 @@ public abstract class Plant {
     // Abstract method to be implemented by subclasses
     public abstract Shot tick(Entorno e, ZombieManager zombieManager, FinalBoss jefeFinal);
 
-    public void receiveDamage() {
+    public void receiveDamage(int i) {
         this.health --;
         if (this.health <= 0) {
             this.isAlive = false;
         }
     }
 
-    public void receiveShootDamage() {
-        this.health -= 5;
-        if (this.health <= 0) {
-            this.isAlive = false;
-        }
+public void receiveShootDamage(int damage) {
+    this.health -= damage; // Le resta el daño recibido (ej: 25)
+    
+    // Si la vida llega a 0 o menos, recién ahí muere
+    if (this.health <= 0) {
+        this.health = 0;
+        this.isAlive = false;
     }
+}
 
     //Method to check collision between two objects
     public boolean itIsColision(double x, double y, double otherX, double otherY) {
@@ -68,15 +71,37 @@ public abstract class Plant {
 
     // Draw the plant on the screen
 public void draw(Entorno e, double scale) {
-        if (!this.isAlive) {return;}
+    if (!this.isAlive) {return;}
 
-        if(this.image != null) {
-            // ACÁ ESTABA EL ERROR: Faltaba el 0 del ángulo antes del scale
-            e.dibujarImagen(this.image, this.x, this.y, 0, scale); 
-        } else {
-            e.dibujarRectangulo(this.x, this.y, 50, 50, 0, Color.GREEN);
-        }
+    // 1. DIBUJAR LA PLANTA
+    if(this.image != null) {
+        // ACÁ ESTABA EL ERROR: Faltaba el 0 del ángulo antes del scale
+        e.dibujarImagen(this.image, this.x, this.y, 0, scale); 
+    } else {
+        e.dibujarRectangulo(this.x, this.y, 50, 50, 0, Color.GREEN);
     }
+    
+    // 2. DIBUJAR LA BARRA DE VIDA (Health Bar)
+    // Tamaños y posición (podés ajustar estos números)
+    double maxWidth = 40.0; 
+    double barHeight = 6.0;
+    double barPosY = this.y + 35; // Lo ubica debajo de la planta
+    
+    // Calcular el porcentaje
+    double healthPercentage = (double) this.health / this.maxHealth; 
+    if (healthPercentage < 0) {
+        healthPercentage = 0;
+    }
+    
+    double currentWidth = maxWidth * healthPercentage;
+    double offsetX = (maxWidth - currentWidth) / 2.0;
+
+    // Fondo ROJO (Daño recibido)
+    e.dibujarRectangulo(this.x, barPosY, maxWidth, barHeight, 0, Color.RED);
+    
+    // Frente VERDE (Vida actual)
+    e.dibujarRectangulo(this.x - offsetX, barPosY, currentWidth, barHeight, 0, Color.GREEN);
+}
 
     // Method to set the plant's position based on its row and column in the grid
     public void setBox (int row, int column, Board board) {
@@ -101,5 +126,6 @@ public void draw(Entorno e, double scale) {
         double distance = Math.sqrt(Math.pow(mouseX - this.x, 2) + Math.pow(mouseY - this.y, 2));
         return distance < 20; // Radio de clickeo
     }
+
 
 }

@@ -3,7 +3,7 @@ package juego.Zombies;
 import java.awt.Image;
 import entorno.Entorno;
 import entorno.Herramientas;
-import juego.Plants.PlantManager; // Acordate de ajustar tus imports
+import juego.Plants.PlantManager; 
 
 public abstract class Zombie {
     protected double x, y;
@@ -13,6 +13,11 @@ public abstract class Zombie {
     protected Image image;
     protected int shootDelayTicks;
     protected int tickCounter;
+
+    // --- NUEVAS VARIABLES DE ATAQUE (Gradual Damage) ---
+    protected int attackTimer; 
+    protected int attackDamage; 
+    protected int attackSpeed; 
 
     public Zombie(double x, double y, double speed, int health, String imageName, double width, double height, double scale, int shootDelayTicks) {
         this.x = x;
@@ -27,9 +32,24 @@ public abstract class Zombie {
         
         this.image = Herramientas.cargarImagen(imageName);
         this.tickCounter = -(int)(Math.random() * this.shootDelayTicks); 
+
+        // STATS POR DEFECTO DEL ATAQUE (Se pueden cambiar en cada hijo)
+        this.attackTimer = 0;
+        this.attackDamage = 15; // Daño por mordisco
+        this.attackSpeed = 60;  // 60 ticks = 1 segundo entre cada mordisco
     }
 
-    //Method for the zombie to perform its actions each tick
+    // --- MÉTODO DE COOLDOWN ---
+    public boolean canAttack() {
+        if (this.attackTimer >= this.attackSpeed) {
+            this.attackTimer = 0; // Reiniciamos el temporizador tras morder
+            return true;
+        }
+        this.attackTimer++; // Sumamos tiempo si aún está masticando
+        return false;
+    }
+
+    // Method for the zombie to perform its actions each tick
     public ZombieProjectile tick(Entorno e, PlantManager plantManager) {
         if (!this.isAlive()) { return null; }
         
@@ -53,17 +73,16 @@ public abstract class Zombie {
         }
     }
 
-    //method for drawing the zombie on the screen
-public void draw(Entorno e) {
+    // Method for drawing the zombie on the screen
+    public void draw(Entorno e) {
         if (this.image != null) {
             e.dibujarImagen(this.image, this.x, this.y, 0, this.scale);
         } else {
-            // RED DE SEGURIDAD: Si no hay imagen, dibuja un cuadrado rojo
             e.dibujarRectangulo(this.x, this.y, this.width, this.height, 0, java.awt.Color.RED);
         }
     }
 
-    //Method to check collision between the zombie and a plant
+    // Method to check collision between the zombie and a plant
     public boolean isColliding(double otherX, double otherY, double otherWidth, double otherHeight) {
         double myLeft = this.x - this.width / 2;
         double myRight = this.x + this.width / 2;
@@ -83,9 +102,9 @@ public void draw(Entorno e) {
     public double getY() { return this.y; }
     public double getWidth() { return this.width; }
     public double getHeight() { return this.height; }
+    public int getAttackDamage() { return this.attackDamage; } // <-- Nuevo Getter
     public boolean isAlive() { return this.health > 0; }
     public void receiveDamage() { this.health--; }
     public void receiveDamage(int damage) { this.health -= damage; }
     public void setAttacking(boolean attacking) { this.isAttacking = attacking; }
 }
-
