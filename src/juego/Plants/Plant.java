@@ -21,25 +21,28 @@ public abstract class Plant {
 
     protected String name;
 
-    public Plant(double x, double y, int row, int column, String name, int maxHealth) {
-        this.x = x;
-        this.y = y;
-        this.row = row;
-        this.column = column;
-        this.name = name;
-        this.isAlive = true;
-        this.isSelectedForMove = false;
-    }
+public Plant(double x, double y, int row, int column, String name, int maxHealth) {
+    this.x = x;
+    this.y = y;
+    this.row = row;
+    this.column = column;
+    this.name = name;
+    this.health = maxHealth;
+    this.maxHealth = maxHealth;
+    this.isAlive = true;
+    this.isSelectedForMove = false;
+}
 
     // Abstract method to be implemented by subclasses
     public abstract Shot tick(Entorno e, ZombieManager zombieManager, FinalBoss jefeFinal);
 
-    public void receiveDamage(int i) {
-        this.health --;
-        if (this.health <= 0) {
-            this.isAlive = false;
-        }
+public void receiveDamage(int damage) {
+    this.health -= damage;
+    if (this.health <= 0) {
+        this.health = 0;
+        this.isAlive = false;
     }
+}
 
 public void receiveShootDamage(int damage) {
     this.health -= damage; // Le resta el daño recibido (ej: 25)

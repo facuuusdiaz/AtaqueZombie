@@ -32,7 +32,7 @@ public class Collisions {
                 return true; 
             }
 
-            // 1.2 ZOMBIE VS PLANT (Bite with Cooldown)
+            // 1.2 ZOMBIE VS PLANT (Bite with Cooldown / Gradual damage)
             boolean isTouchingPlant = false;
             for (int j = 0; j < plants.length; j++) {
                 Plant p = plants[j];
@@ -40,14 +40,12 @@ public class Collisions {
 
                 if (z.isColliding(p.getX(), p.getY(), 40, 40)) {
                     isTouchingPlant = true;
-                    z.setAttacking(true); // Frena al zombie para que empiece a comer
+                    z.setAttacking(true);
                     
-                    // --- MODIFICACIÓN DE DAÑO GRADUAL ---
-                    // Solo daña a la planta si el temporizador del zombie se completó (ej. cada 1 segundo)
+                    // Controlled gradual bite damage using cooldown
                     if (z.canAttack()) {
                         p.receiveDamage(z.getAttackDamage()); 
                     }
-                    // ------------------------------------
                     
                     if (!p.isAlive()) { 
                         // If it was a bomb, explode!
@@ -105,34 +103,31 @@ public class Collisions {
             }
         } 
 
-        // 2. ZOMBIE PROJECTILE VS PLANT
-for (int k = 0; k < zombieProjectiles.length; k++) {
-    ZombieProjectile zp = zombieProjectiles[k];
-    if (zp == null) { continue; }
+        // 2. ZOMBIE PROJECTILE VS PLANT (Gradual Snowball Damage)
+        for (int k = 0; k < zombieProjectiles.length; k++) {
+            ZombieProjectile zp = zombieProjectiles[k];
+            if (zp == null) { continue; }
 
-    for (int j = 0; j < plants.length; j++) {
-        Plant p = plants[j];
-        if (p == null || !p.isAlive()) { continue; }
+            for (int j = 0; j < plants.length; j++) {
+                Plant p = plants[j];
+                if (p == null || !p.isAlive()) { continue; }
 
-        if (p.itIsColision(zp.getX(), zp.getY(), zp.getDiameter(), zp.getDiameter())) {
-            
-            // --- CAMBIO ACÁ: Pasamos un daño controlado en lugar de matar de golpe ---
-            int projectileDamage = 25; // Podés ajustar este número (ej: 15, 25, 50)
-            p.receiveDamage(projectileDamage); 
-            // ----------------------------------------------------------------------
-            
-            zombieManager.removeProjectile(k);
-            
-            if (!p.isAlive()) {
-                if (p.getName().equals("Rose-Bomba")) {
-                    this.explode(p.getRow(), p.getColumn(), zombieManager, graves, board, finalBoss);
+                if (p.itIsColision(zp.getX(), zp.getY(), zp.getDiameter(), zp.getDiameter())) {
+                    
+                    // PASSING A CONTROLLED DAMAGE VALUE (e.g. 25) INSTEAD OF INSTANT KILL
+                    p.receiveShootDamage(25); 
+                    zombieManager.removeProjectile(k);
+                    
+                    if (!p.isAlive()) {
+                        if (p.getName().equals("Rose-Bomba")) {
+                            this.explode(p.getRow(), p.getColumn(), zombieManager, graves, board, finalBoss);
+                        }
+                        plantManager.removePlant(j);
+                    }
+                    break;
                 }
-                plantManager.removePlant(j);
             }
-            break;
         }
-    }
-}
 
         // 3. SHOT (PLANT) VS GRAVE
         for (int k = 0; k < shots.length; k++) {
@@ -157,7 +152,6 @@ for (int k = 0; k < zombieProjectiles.length; k++) {
     }
     
     private void explode(int centerRow, int centerCol, ZombieManager zombieManager, Grave[] graves, Board board, FinalBoss finalBoss) {
-        // Explodes in a 3x3 grid
         for (int r = centerRow - 1; r <= centerRow + 1; r++) {
             for (int c = centerCol - 1; c <= centerCol + 1; c++) {
                 if (r < 0 || r >= 5 || c < 0 || c >= 10) { continue; }
@@ -175,7 +169,7 @@ for (int k = 0; k < zombieProjectiles.length; k++) {
                 Zombie[] zombies = zombieManager.getZombies(); 
                 for (int i = 0; i < zombies.length; i++) { 
                     Zombie z = zombies[i];
-                    if (z != null && z == finalBoss) { continue; } // Boss is immune
+                    if (z != null && z == finalBoss) { continue; }
                     
                     if (z != null && z.isAlive()) {
                         if (z.isColliding(boxX, boxY, boxWidth, boxHeight)) {
